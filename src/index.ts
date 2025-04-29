@@ -2,7 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { redisClient } from "./redisClient";
-import { tasksCollection } from "./mongoClient";
+import { mongoClient, tasksCollection,db } from "./mongoClient";
 import cors from "cors";
 import { createTask } from "./utils/createtask";
 
@@ -32,7 +32,6 @@ io.on("connection", (socket) => {
       // Create a task with the proper ID using the createTask utility
       const task = createTask(taskData);
 
-      // Get the current tasks from Redis
       const tasks = await redisClient.lRange("FULLSTACK_TASKS_Navdeep", 0, -1);
       let taskList = tasks.map((task) => JSON.parse(task));
 
@@ -40,15 +39,12 @@ io.on("connection", (socket) => {
       taskList.push(task);
 
       if (taskList.length > 50) {
-        // If there are more than 50 tasks, move them to MongoDB
         await tasksCollection.insertMany(taskList);
 
-        // Clear Redis cache
         await redisClient.del("FULLSTACK_TASKS_Navdeep");
 
         console.log("Moved tasks to MongoDB and cleared Redis");
       } else {
-        // Store tasks back in Redis
         await redisClient.del("FULLSTACK_TASKS_Navdeep");
         const serializedTasks = taskList.map((t) => JSON.stringify(t));
         await redisClient.rPush("FULLSTACK_TASKS_Navdeep", serializedTasks);
@@ -56,7 +52,6 @@ io.on("connection", (socket) => {
         console.log("Task added to Redis");
       }
 
-      // Emit the newly added task back to the frontend
       socket.emit("taskAdded", task);
     } catch (err) {
       console.error("Error adding task:", err);
@@ -88,7 +83,6 @@ io.on("connection", (socket) => {
 app.get("/fetchAllTasks", async (req, res) => {
   try {
     let tasks = await redisClient.lRange("FULLSTACK_TASKS_Navdeep", 0, -1);
-
     if (tasks.length === 0) {
       const mongoTasks = await tasksCollection.find().toArray();
       tasks = mongoTasks.map((task) => JSON.stringify(task));
