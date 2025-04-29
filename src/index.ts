@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { redisClient } from './redisClient';  
 import { tasksCollection } from './mongoClient';  
-import tasksRoute from './routes/tasks';
+import { Task } from './types/Task';
 
 const app = express();
 const server = createServer(app);
@@ -17,7 +17,7 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   console.log('A user connected');
   
-  socket.on('add', async (task) => {
+  socket.on('add', async (task:Task) => {
     try {
       const tasks = await redisClient.lRange('FULLSTACK_TASKS_Navdeep', 0, -1);
       let taskList = tasks.map(task => JSON.parse(task)); 
