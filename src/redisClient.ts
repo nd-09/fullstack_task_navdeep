@@ -1,4 +1,3 @@
-// src/redisClient.ts
 import { createClient } from 'redis';
 import dotenv from 'dotenv';
 

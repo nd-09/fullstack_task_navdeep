@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import { redisClient } from "./redisClient";
 import { tasksCollection } from "./mongoClient";
 import cors from "cors";
-import { createTask } from "./utils/createtask";  // Importing the utility function for task creation
+import { createTask } from "./utils/createtask";
 
 const app = express();
 const server = createServer(app);
